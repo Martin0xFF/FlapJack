@@ -1,0 +1,12 @@
+main.c:67:6:print_pal_error	48	static
+main.c:75:6:cdc_printf	16	static
+main.c:84:6:print_range_status	56	static
+main.c:104:15:TOF_Init	24	static
+main.c:175:10:TOF_Single_Range	48	static
+main.c:194:5:main	528	static
+main.c:269:6:SystemClock_Config	88	static
+main.c:313:13:MX_I2C1_Init	8	static
+main.c:347:13:MX_TIM3_Init	32	static
+main.c:392:13:MX_TIM9_Init	24	static
+main.c:430:13:MX_GPIO_Init	24	static
+main.c:448:6:Error_Handler	4	static,ignoring_inline_asm
