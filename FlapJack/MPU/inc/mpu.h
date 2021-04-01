@@ -35,5 +35,6 @@ int mpu_get_gyro_config(uint16_t dev_addr, uint8_t *config);
 int mpu_set_acel_config(uint16_t dev_addr, uint8_t *config);
 int mpu_get_acel_config(uint16_t dev_addr, uint8_t *config);
 
-int mpu_get_data(uint16_t dev_addr, int16_t *x, int16_t *y, int16_t *z, int16_t *t, int16_t *a, int16_t *b, int16_t *g);
+int mpu_get_bytes(uint16_t dev_addr, uint8_t *a);
+int mpu_get_data(uint16_t dev_addr, uint16_t *a);
 int mpu_pwr_mgmt(uint16_t dev_addr, uint8_t config1, uint8_t config2);

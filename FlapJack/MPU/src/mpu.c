@@ -57,20 +57,23 @@ int mpu_get_acel_config(uint16_t dev_addr, uint8_t *config){
 }
 
 
-int mpu_get_data(uint16_t dev_addr, int16_t *x, int16_t *y, int16_t *z, int16_t *t, int16_t *a, int16_t *b, int16_t *g){
+int mpu_get_bytes(uint16_t dev_addr, uint8_t *a){
+	// make sure input a is 14 elements
+	uint8_t status = 0;
+	uint8_t i;
+	status = HAL_I2C_Mem_Read(&hi2c1, dev_addr<<1, MPU_DAT, 1, a, 14, HAL_MAX_DELAY);
+	return status;
+}
+
+
+int mpu_get_data(uint16_t dev_addr, uint16_t *a){
 	uint8_t status = 0;
 	uint8_t d[14] = {0} ;
+	uint8_t i;
 	status = HAL_I2C_Mem_Read(&hi2c1, dev_addr<<1, MPU_DAT, 1, d, 14, HAL_MAX_DELAY);
-	*x = (uint16_t)d[0]<<8 | (uint16_t)d[1];
-	*y = (uint16_t)d[2]<<8 | (uint16_t)d[3];
-	*z = (uint16_t)d[4]<<8 | (uint16_t)d[5];
-
-	*t = (uint16_t)d[6]<<8 | (uint16_t)d[7];
-
-	*a = (uint16_t)d[8]<<8 | (uint16_t)d[9];
-	*b = (uint16_t)d[10]<<8 | (uint16_t)d[11];
-	*g = (uint16_t)d[12]<<8 | (uint16_t)d[13];
-
+	for (i=0; i < 7; i++){
+		a[i] = (uint16_t)d[i]<<8 | (uint16_t)d[i+1];
+	}
 	return status;
 }
 

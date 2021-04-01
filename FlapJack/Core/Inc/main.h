@@ -47,7 +47,26 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern I2C_HandleTypeDef hi2c1;
-extern VL53L0X_Error Status;
+extern int8_t State;
+extern int8_t Act_State;
+extern uint32_t DL;
+extern uint32_t DR;
+extern uint8_t mconfig[5];
+extern uint8_t Transmit_flag;
+extern enum{
+	RWHEEL_FORWARD = 0,
+	RWHEEL_BACKWARD,
+	RWHEEL_SET_SPEED,
+	RWHEEL_STOP,
+	LWHEEL_FORWARD,
+	LWHEEL_BACKWARD,
+	LWHEEL_SET_SPEED,
+	LWHEEL_STOP,
+	STATE_DATA_SEND,
+	STATE_DATA_STOP,
+	STATE_ACT_UPDATE
+
+};
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -59,6 +78,8 @@ extern VL53L0X_Error Status;
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);

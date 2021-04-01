@@ -32,7 +32,12 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-VL53L0X_Error Status;
+int8_t State = 0;
+int8_t Act_State = 0;
+uint32_t DL = 0;
+uint32_t DR = 0;
+uint8_t mconfig[5];
+uint8_t Transmit_flag = 0;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -262,8 +267,28 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  if (Buf[0] == 'n')
-	  Status = 0;
+
+
+	switch(Buf[0]){
+  	  case 'n':
+  		  State = STATE_DATA_SEND;
+  		  break;
+  	  case 'p':
+  		  State = STATE_DATA_STOP;
+  		  break;
+  	  case 'r':
+  		  NVIC_SystemReset();
+  		  break;
+  	  case 'm':
+  		  for(int i = 0; i < 5; i++){
+  			mconfig[i] = Buf[1+i];
+  		  }
+  		  Act_State = STATE_ACT_UPDATE;
+  		  break;
+  	  default:
+  		  break;
+  }
+
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
@@ -286,8 +311,10 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+  Transmit_flag = 1;
   if (hcdc->TxState != 0){
-    return USBD_BUSY;
+    //return USBD_BUSY;
+	hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
   }
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
@@ -314,6 +341,7 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
   UNUSED(Buf);
   UNUSED(Len);
   UNUSED(epnum);
+  Transmit_flag = 0;
   /* USER CODE END 13 */
   return result;
 }
