@@ -89,7 +89,7 @@ class Hermes():
         '''
         when we are done with the serial com, want to free it
         '''
-        self.ser.write_mconfig(-1,-1, 0, 0)
+        self.write_mconfig(-1,-1, 0, 0)
 
 
 def sensor_test(port):

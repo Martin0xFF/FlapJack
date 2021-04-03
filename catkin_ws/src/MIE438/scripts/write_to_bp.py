@@ -96,8 +96,8 @@ class bp_communicator_write():
             #self.r_speed = 20000
         elif self.key == 69 or self.key == 101: # E (Stop)
             print("Stopping...")
-            self.l_dir = 1
-            self.r_dir = 1
+            self.l_dir = -1
+            self.r_dir = -1 
             self.l_speed = 0
             self.r_speed = 0
         elif self.key == 68 or self.key == 100: # D (Turn Clockwise)
@@ -112,20 +112,19 @@ class bp_communicator_write():
             self.r_speed += 5000
             if self.l_speed >= 65000:
                 self.l_speed = 65000
-            elif self.r_speed >= 65000:
+            if self.r_speed >= 65000:
                 self.r_speed = 65000
         elif self.key == 75 or self.key == 107: # K (Slow Down)
             print("Slowing down...")
             self.l_speed -= 5000
             self.r_speed -= 5000
             if self.l_speed <= 0:
-                self.l_speed = 2500
-            elif self.r_speed <= 0:
-                self.r_speed = 2500
+                self.l_speed = 0
+            if self.r_speed <= 0:
+                self.r_speed = 0
         elif self.key == ord('\x03'):
             return False
-        else:
-            True
+
         self.command.write_mconfig(self.l_dir, self.r_dir, self.l_speed, self.r_speed)
         self.key = None
         return True
