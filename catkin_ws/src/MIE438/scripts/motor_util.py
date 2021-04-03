@@ -122,19 +122,20 @@ def convert_counts_to_duty(counts):
     
     return abs(int((counts - 14)*462.8 + 10000))
 
-def motor_control(port):
+def motor_control(port, target):
     import time
     aprime = Hermes(port)
-    target_counts_per_sec = 45
-    kpl = 500
-    kil = 200
-    kdl = 15
+    target_counts_per_sec = target
+    print(target)
+    kpl = 600
+    kil = 1250
+    kdl = 25
       
-    kpr = 500
-    kir = 200
-    kdr = 15
+    kpr = 600
+    kir = 1250
+    kdr = 25
 
-    integral_cutoff = 8000
+    integral_cutoff =1000
     eprevl = 0
     eprevr = 0
     elacum = 0
@@ -142,6 +143,7 @@ def motor_control(port):
     lefterror=0
     righterror=0
     aprime.send_command('n')
+    aprime.ser.flushInput()
     while True:
         s = time.time()
         
@@ -156,7 +158,7 @@ def motor_control(port):
             lefterror =  target_counts_per_sec - datum['encoderleft']
             righterror = target_counts_per_sec - datum['encoderright']
             
-            print(f"{datum['encoderleft']}:{datum['encoderright']}")
+            
             elacum += delta*lefterror
             if elacum > 0:
                 elacum = min(elacum, integral_cutoff)
@@ -168,8 +170,11 @@ def motor_control(port):
                 eracum = min(eracum, integral_cutoff)
             else:
                 eracum = max(eracum, -integral_cutoff)
+            print(f"{datum['encoderleft']}:{datum['encoderright']}: Left control {int( kpl*lefterror + kil*elacum + kdl*((eprevl - lefterror)/delta)) }")
+            lcontrol = min(convert_counts_to_duty(target_counts_per_sec) + int( kpl*lefterror + kil*elacum + kdl*((eprevl - lefterror)/delta)),65000)
+            rcontrol = min(convert_counts_to_duty(target_counts_per_sec) + int( kpr*righterror + kir*eracum + kdr*((eprevr - righterror)/delta)),65000)
 
-            aprime.write_mconfig(1,1, int(convert_counts_to_duty(target_counts_per_sec) + kpl*lefterror + kil*elacum + kdl*((eprevl - lefterror)/delta)), int(convert_counts_to_duty(target_counts_per_sec) + kpr*righterror + kir*eracum + kdr*((eprevr - righterror)/delta)))
+            aprime.write_mconfig(1,1, lcontrol, rcontrol)
         s = time.time()
         while(time.time()-s< 3):
             datum = aprime.extract()
@@ -251,7 +256,7 @@ if __name__ == "__main__":
     parser.add_argument('--sensor_test', '-s', action='store_true')
     parser.add_argument('--control_test', '-c', action='store_true')
     parser.add_argument('--speed_test', '-sp', action='store_true')
- 
+    parser.add_argument('--target','-t') 
 
 
     args = parser.parse_args()
@@ -269,4 +274,4 @@ if __name__ == "__main__":
     if args.control_test:
         control_test(args.port)
     if args.speed_test:
-        motor_control(args.port)
+        motor_control(args.port,int(args.target))
