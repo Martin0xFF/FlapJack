@@ -7,6 +7,9 @@ import numpy as np
 from std_msgs.msg import String
 import sys, select, os, serial
 
+# Custom Modules
+from motor_util import Hermes
+
 if os.name == 'nt':
     import msvcrt
 else:
@@ -29,86 +32,6 @@ def getKey():
 
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
     return key
-
-class Hermes():
-    '''
-    Messager between computer and STM32 via serial
-    '''
-
-    def __init__(self, port=None, baudrate=115200, sensor_frame_size=20):
-        self.frames = deque(maxlen=5)  # we would only like topical data
-        if port is None:
-            raise ("Must Provide Serial port for Hermes object")
-        self.ser = serial.Serial(port, baudrate, timeout=None)  # attempt to open serial comm
-        self.sfs = sensor_frame_size
-
-    def send_command(self, specifier=None, byte_arr=b''):
-        if specifier is None:
-            raise ("Specifier for send_command not provided")
-        self.ser.write(bytes(specifier, 'utf-8') + byte_arr)
-
-    def _read_into_queue(self, ):
-        '''
-        Read latest sensor reading into frames queue
-        We utilize a queue here just in case
-        '''
-        self.frames.appendleft(self._parse_sensor_frame(
-            self.ser.read(20)))  # multithread this part so we just readinto a queue that other code will access
-
-    def _extract_from_queue(self, ):
-        '''
-        Pull the latest value from the frames queue
-        '''
-        return self.frames.pop()
-
-    def _parse_sensor_frame(self, read_bytes):
-        to_parse = ('ax', 'ay', 'az', 'temperature',
-                    'gx', 'gy', 'gz', 'range', 'encoderleft', 'encoderright')
-        out = {}
-        for i, element in enumerate(to_parse):
-            out[element] = int.from_bytes(read_bytes[i * 2:i * 2 + 2], 'big', signed=True)
-        return out
-
-    def flush_input(self, ):
-        self.ser.reset_input_buffer()
-
-    def extract(self, n=1):
-        '''
-        try to read n and extract
-        '''
-        self._read_into_queue()
-        return self._extract_from_queue()
-
-    def display(self, sensor_data):
-        for key in sensor_data:
-            print(f"{key}:{sensor_data[key]}", end='\r\n')
-        print('', end='\r', flush=True)
-
-    def write_mconfig(self, l_dir, r_dir, l_speed=0, r_speed=0):
-            '''
-            l_dir - direction of the left motor, 1 for forward, 0 for back, anything else is stop
-            r_dir - direction of the right motor, 1 for forward, 0 for back, anything else is stop
-
-            l_speed - desired angular speed of the motor (as duty cycle)
-            r_speed - desired angular speed of the motor (as duty cycle) (0-65535)
-            '''
-
-            ctrl_byte = 0x00 
-
-            if l_dir == 0:
-                ctrl_byte = 0b00000000 # Left Motor is on and going backwards        
-            elif l_dir == 1:
-                ctrl_byte = 0b00000010 # Left Motor is on and going forwards
-            else:
-                ctrl_byte = 0b00001000 # Left Motor is off DGAF about direction
-
-            if r_dir == 0:
-                ctrl_byte |= 0b00000000 # Right Motor is on and going backwards        
-            elif r_dir == 1:
-                ctrl_byte |= 0b00000001 # Right Motor is on and going forwards
-            else:
-                ctrl_byte |= 0b00000100 # Right Motor is off DGAF about direction
-            self.send_command('m', bytearray([ctrl_byte, l_speed>>8&0xff, l_speed&0xff,r_speed>>8&0xff, r_speed&0xff]))
 
 """
 OPERATOR KEYS:
@@ -157,20 +80,20 @@ class bp_communicator_write():
             print("Moving forward...")
             self.l_dir = 1
             self.r_dir = 1
-            self.l_speed = 20000
-            self.r_speed = 20000
+            #self.l_speed = 20000
+            #self.r_speed = 20000
         elif self.key == 65 or self.key == 97: # A (Turn Counterclockwise)
             print("Turning counterclockwise...")
             self.l_dir = 0
             self.r_dir = 1
-            self.l_speed = 20000
-            self.r_speed = 20000
+            #self.l_speed = 20000
+            #self.r_speed = 20000
         elif self.key == 83 or self.key == 115: # S (Backward)
             print("Moving backwards...")
             self.l_dir = 0
             self.r_dir = 0
-            self.l_speed = 20000
-            self.r_speed = 20000
+            #self.l_speed = 20000
+            #self.r_speed = 20000
         elif self.key == 69 or self.key == 101: # E (Stop)
             print("Stopping...")
             self.l_dir = 1
@@ -181,15 +104,15 @@ class bp_communicator_write():
             print("Turning clockwise...")
             self.l_dir = 1
             self.r_dir = 0
-            self.l_speed = 20000
-            self.r_speed = 20000
+            #self.l_speed = 20000
+            #self.r_speed = 20000
         elif self.key == 73 or self.key == 105: # I (Speed Up)
             print("Speeding up...")
             self.l_speed += 5000
             self.r_speed += 5000
-            if self.l_speed >= 65535:
+            if self.l_speed >= 65000:
                 self.l_speed = 65000
-            elif self.r_speed >= 65535:
+            elif self.r_speed >= 65000:
                 self.r_speed = 65000
         elif self.key == 75 or self.key == 107: # K (Slow Down)
             print("Slowing down...")
