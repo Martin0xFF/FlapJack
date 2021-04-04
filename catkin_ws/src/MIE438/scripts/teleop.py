@@ -49,6 +49,9 @@ K - Slow Down
 
 class bp_communicator_write():
     def __init__(self):
+        # Subscriber
+        self.control_sub = rospy.Subscriber('motor_ctrl', String, self.ctrl_callback, queue_size=1)
+        self.ctrl = None
 
         # For writing back to BP
         self.port = None
@@ -71,6 +74,9 @@ class bp_communicator_write():
         self.freq = 10
         self.rate = rospy.Rate(self.freq)
         rospy.sleep(1)
+
+    def ctrl_callback(self, data):
+        self.ctrl = data.data
 
     def write(self):
         print("Enter a command.")
