@@ -4,11 +4,8 @@ import serial.tools.list_ports
 import time
 from collections import deque
 import numpy as np
-from std_msgs.msg import String
+from std_msgs.msg import String, UInt16MultiArray
 import sys, select, os, serial
-
-# Custom Modules
-from motor_util import Hermes
 
 if os.name == 'nt':
     import msvcrt
@@ -47,22 +44,14 @@ K - Slow Down
 
 """
 
-class bp_communicator_write():
+class teleop_obj():
     def __init__(self):
-        # Subscriber
-        self.control_sub = rospy.Subscriber('motor_ctrl', String, self.ctrl_callback, queue_size=1)
-        self.ctrl = None
+        # Publishers and subscribers
+        self.target_speed_pub = rospy.Publisher('target_speed', UInt16MultiArray, queue_size=1)
+        self.target_speed = UInt16MultiArray()
 
-        # For writing back to BP
-        self.port = None
-        while not self.port:
-            for port in serial.tools.list_ports.comports():
-                if port[1] == "STM32 Virtual ComPort":
-                    self.port = port[0]
-            if not self.port:
-                print("ERROR: Waiting for port.")
+        # For getting key
         self.key = None
-        self.command = Hermes(self.port)
 
         # For negotiating speed:
         self.l_dir = 1
@@ -79,6 +68,7 @@ class bp_communicator_write():
         self.ctrl = data.data
 
     def write(self):
+        # NOTE: All commands start at 0.15m/s
         print("Enter a command.")
         while self.key is None or self.key=='':
             self.key = getKey()    
@@ -86,20 +76,20 @@ class bp_communicator_write():
             print("Moving forward...")
             self.l_dir = 1
             self.r_dir = 1
-            #self.l_speed = 20000
-            #self.r_speed = 20000
+            self.l_speed = 150
+            self.r_speed = 150
         elif self.key == 65 or self.key == 97: # A (Turn Counterclockwise)
             print("Turning counterclockwise...")
             self.l_dir = 0
             self.r_dir = 1
-            #self.l_speed = 20000
-            #self.r_speed = 20000
+            self.l_speed = 150
+            self.r_speed = 150
         elif self.key == 83 or self.key == 115: # S (Backward)
             print("Moving backwards...")
             self.l_dir = 0
             self.r_dir = 0
-            #self.l_speed = 20000
-            #self.r_speed = 20000
+            self.l_speed = 150
+            self.r_speed = 150
         elif self.key == 69 or self.key == 101: # E (Stop)
             print("Stopping...")
             self.l_dir = -1
@@ -110,20 +100,22 @@ class bp_communicator_write():
             print("Turning clockwise...")
             self.l_dir = 1
             self.r_dir = 0
-            #self.l_speed = 20000
-            #self.r_speed = 20000
+            self.l_speed = 150
+            self.r_speed = 150
         elif self.key == 73 or self.key == 105: # I (Speed Up)
+            # Increase by 0.15m/s
             print("Speeding up...")
-            self.l_speed += 5000
-            self.r_speed += 5000
-            if self.l_speed >= 65000:
-                self.l_speed = 65000
-            if self.r_speed >= 65000:
-                self.r_speed = 65000
+            self.l_speed += 48
+            self.r_speed += 48
+            if self.l_speed >= 480:
+                self.l_speed = 480
+            if self.r_speed >= 480:
+                self.r_speed = 480
         elif self.key == 75 or self.key == 107: # K (Slow Down)
+            # Decrease by 0.15m/s
             print("Slowing down...")
-            self.l_speed -= 5000
-            self.r_speed -= 5000
+            self.l_speed -= 48
+            self.r_speed -= 48
             if self.l_speed <= 0:
                 self.l_speed = 0
             if self.r_speed <= 0:
@@ -131,7 +123,9 @@ class bp_communicator_write():
         elif self.key == ord('\x03'):
             return False
 
-        self.command.write_mconfig(self.l_dir, self.r_dir, self.l_speed, self.r_speed)
+        # Sends length 4 array: [L Dir, R Dir, Left Target Speed, Right Target Speed]
+        self.target_speed.data = [self.l_dir, self.r_dir, self.l_speed, self.r_speed]
+        self.target_speed_pub.publish(self.target_speed)
         self.key = None
         return True
 
@@ -140,7 +134,7 @@ if __name__ == "__main__":
         settings = termios.tcgetattr(sys.stdin)
 
     rospy.init_node('MIE438_Teleop')
-    bp_comm = bp_communicator_write()
+    teleop = teleop_obj()
     try:
         print(" FLAPJACK TELE-OPERATION MODE \n")
         print(" Controls: \n")
@@ -148,11 +142,11 @@ if __name__ == "__main__":
         print(" A - Turn Counterclockwise \n")
         print(" S - Backward \n")
         print(" D - Turn Clockwise \n")
-        print(" E - Stop \n\n")
+        print(" E - Stop \n")
         print(" I - Speed Up \n")
         print(" K - Slow Down \n")
         while (1):
-           run = bp_comm.write()
+           run = teleop.write()
            if not run:
                 break
     except rospy.ROSInterruptException:
