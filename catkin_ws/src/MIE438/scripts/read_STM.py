@@ -4,7 +4,7 @@ import serial.tools.list_ports
 import time
 from collections import deque
 import numpy as np
-from std_msgs.msg import String, UInt16MultiArray
+from std_msgs.msg import String, Float32MultiArray
 import sys, select, os, serial
 
 # Custom Modules
@@ -17,8 +17,8 @@ else:
 class bp_communicator_read():
     def __init__(self):
         # Publishers and subscribers
-        self.odom_pub = rospy.Publisher('odom', UInt16MultiArray, queue_size=1)
-        self.odom = UInt16MultiArray()
+        self.odom_pub = rospy.Publisher('odom', Float32MultiArray, queue_size=1)
+        self.odom = Float32MultiArray()
 
         # For writing back to BP
         self.port = None
@@ -38,14 +38,14 @@ class bp_communicator_read():
         rospy.sleep(1)
 
     def read(self):
-        self.reading.send_command('n')
-        self.reading.ser.flushInput()
+        
         self.start = time.time()
         self.data = self.reading.extract()
 
         # Sends length 3 array: [Encoder Left, Encoder Right, Delta]
         self.odom.data = [self.data['encoderleft'], self.data['encoderright'], time.time()-self.start]
         self.odom_pub.publish(self.odom)
+        print(self.odom.data)
         return True
 
 if __name__ == "__main__":
@@ -55,6 +55,7 @@ if __name__ == "__main__":
     rospy.init_node('MIE438_Odom')
     bp_comm = bp_communicator_read()
     try:
+        bp_comm.reading.send_command('n')
         while (1):
            bp_comm.read()
     except rospy.ROSInterruptException:

@@ -58,6 +58,7 @@ class teleop_obj():
         self.r_dir = 1
         self.l_speed = 0
         self.r_speed = 0
+        self.goal_speed = 0
 
         # Other attributes
         self.freq = 10
@@ -78,35 +79,41 @@ class teleop_obj():
             self.r_dir = 1
             self.l_speed = 150
             self.r_speed = 150
+            self.goal_speed = 0.15
         elif self.key == 65 or self.key == 97: # A (Turn Counterclockwise)
             print("Turning counterclockwise...")
             self.l_dir = 0
             self.r_dir = 1
             self.l_speed = 150
             self.r_speed = 150
+            self.goal_speed = 0.15
         elif self.key == 83 or self.key == 115: # S (Backward)
             print("Moving backwards...")
             self.l_dir = 0
             self.r_dir = 0
             self.l_speed = 150
             self.r_speed = 150
+            self.goal_speed = 0.15
         elif self.key == 69 or self.key == 101: # E (Stop)
             print("Stopping...")
-            self.l_dir = -1
-            self.r_dir = -1 
+            self.l_dir = 1
+            self.r_dir = 1
             self.l_speed = 0
             self.r_speed = 0
+            self.goal_speed = 0.15
         elif self.key == 68 or self.key == 100: # D (Turn Clockwise)
             print("Turning clockwise...")
             self.l_dir = 1
             self.r_dir = 0
             self.l_speed = 150
             self.r_speed = 150
+            self.goal_speed = 0.15
         elif self.key == 73 or self.key == 105: # I (Speed Up)
             # Increase by 0.15m/s
             print("Speeding up...")
             self.l_speed += 48
             self.r_speed += 48
+            self.goal_speed += 0.15
             if self.l_speed >= 480:
                 self.l_speed = 480
             if self.r_speed >= 480:
@@ -116,6 +123,7 @@ class teleop_obj():
             print("Slowing down...")
             self.l_speed -= 48
             self.r_speed -= 48
+            self.goal_speed -= 0.15
             if self.l_speed <= 0:
                 self.l_speed = 0
             if self.r_speed <= 0:
@@ -124,6 +132,7 @@ class teleop_obj():
             return False
 
         # Sends length 4 array: [L Dir, R Dir, Left Target Speed, Right Target Speed]
+        print(f"Current Goal Speed: {self.goal_speed}")
         self.target_speed.data = [self.l_dir, self.r_dir, self.l_speed, self.r_speed]
         self.target_speed_pub.publish(self.target_speed)
         self.key = None

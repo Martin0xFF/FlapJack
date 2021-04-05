@@ -9,7 +9,7 @@ class Hermes():
         self.frames = deque(maxlen=5)                          # we would only like topical data
         if port is None:
             raise("Must Provide Serial port for Hermes object")
-        self.ser = serial.Serial(port, baudrate, timeout=None)    # attempt to open serial comm
+        self.ser = serial.Serial(port, baudrate, timeout=5)    # attempt to open serial comm
         self.sfs = sensor_frame_size
 
     def send_command(self, specifier=None, byte_arr=b''):
@@ -21,8 +21,8 @@ class Hermes():
         '''
         Read latest sensor reading into frames queue
         We utilize a queue here just in case 
-        '''
-        self.frames.appendleft(self._parse_sensor_frame(self.ser.read(20))) # multithread this part so we just readinto a queue that other code will access
+        ''' 
+        self.frames.appendleft(self._parse_sensor_frame(self.ser.read(20)))
 
     def _extract_from_queue(self,):
         '''
