@@ -4,7 +4,7 @@ import serial.tools.list_ports
 import time
 from collections import deque
 import numpy as np
-from std_msgs.msg import String, UInt16MultiArray
+from std_msgs.msg import String, Float64MultiArray
 import sys, select, os, serial
 
 if os.name == 'nt':
@@ -47,18 +47,15 @@ K - Slow Down
 class teleop_obj():
     def __init__(self):
         # Publishers and subscribers
-        self.target_speed_pub = rospy.Publisher('target_speed', UInt16MultiArray, queue_size=1)
-        self.target_speed = UInt16MultiArray()
+        self.target_speed_pub = rospy.Publisher('target_speed', Float64MultiArray, queue_size=1)
+        self.target_speed = Float64MultiArray()
 
         # For getting key
         self.key = None
 
         # For negotiating speed:
-        self.l_dir = 1
-        self.r_dir = 1
         self.l_speed = 0
         self.r_speed = 0
-        self.goal_speed = 0
 
         # Other attributes
         self.freq = 10
@@ -75,65 +72,57 @@ class teleop_obj():
             self.key = getKey()    
         if self.key == 87 or self.key == 119: # W (Forward)
             print("Moving forward...")
-            self.l_dir = 1
-            self.r_dir = 1
-            self.l_speed = 150
-            self.r_speed = 150
-            self.goal_speed = 0.15
+            self.l_speed = 0.15
+            self.r_speed = 0.15
         elif self.key == 65 or self.key == 97: # A (Turn Counterclockwise)
             print("Turning counterclockwise...")
-            self.l_dir = 0
-            self.r_dir = 1
-            self.l_speed = 150
-            self.r_speed = 150
-            self.goal_speed = 0.15
+            self.l_speed = -0.15
+            self.r_speed = 0.15
         elif self.key == 83 or self.key == 115: # S (Backward)
             print("Moving backwards...")
-            self.l_dir = 0
-            self.r_dir = 0
-            self.l_speed = 150
-            self.r_speed = 150
-            self.goal_speed = 0.15
+            self.l_speed = -0.15
+            self.r_speed = -0.15
         elif self.key == 69 or self.key == 101: # E (Stop)
             print("Stopping...")
-            self.l_dir = 1
-            self.r_dir = 1
             self.l_speed = 0
             self.r_speed = 0
-            self.goal_speed = 0.15
         elif self.key == 68 or self.key == 100: # D (Turn Clockwise)
             print("Turning clockwise...")
-            self.l_dir = 1
-            self.r_dir = 0
-            self.l_speed = 150
-            self.r_speed = 150
-            self.goal_speed = 0.15
+            self.l_speed = 0.15
+            self.r_speed = -0.15
         elif self.key == 73 or self.key == 105: # I (Speed Up)
             # Increase by 0.15m/s
             print("Speeding up...")
-            self.l_speed += 48
-            self.r_speed += 48
-            self.goal_speed += 0.15
-            if self.l_speed >= 480:
-                self.l_speed = 480
-            if self.r_speed >= 480:
-                self.r_speed = 480
+            if self.l_speed>0:
+                self.l_speed = min(self.l_speed + 0.48, 20)
+            else:
+                self.l_speed = max( self.l_speed - 0.48, -20)
+           
+            if self.r_speed>0:
+                self.r_speed = min(self.r_speed + 0.48, 20)
+            else:
+                self.r_speed = max( self.r_speed - 0.48, -20)
+            
         elif self.key == 75 or self.key == 107: # K (Slow Down)
             # Decrease by 0.15m/s
             print("Slowing down...")
-            self.l_speed -= 48
-            self.r_speed -= 48
-            self.goal_speed -= 0.15
-            if self.l_speed <= 0:
-                self.l_speed = 0
-            if self.r_speed <= 0:
-                self.r_speed = 0
+
+
+            if self.l_speed>0:
+                self.l_speed = max(self.l_speed - 0.48, 0 )
+            else:
+                self.l_speed = min( self.l_speed + 0.48, 0)
+           
+            if self.r_speed>0:
+                self.r_speed = max(self.r_speed - 0.48, 0)
+            else:
+                self.r_speed = min( self.r_speed + 0.48, 0)
         elif self.key == ord('\x03'):
             return False
 
-        # Sends length 4 array: [L Dir, R Dir, Left Target Speed, Right Target Speed]
-        print(f"Current Goal Speed: {self.goal_speed}")
-        self.target_speed.data = [self.l_dir, self.r_dir, self.l_speed, self.r_speed]
+        # Sends length 4 array: [Signed Left Target Speed, Signed Right Target Speed]
+        print(f"Current Target Speed {self.l_speed} rad/s")
+        self.target_speed.data = [self.l_speed, self.r_speed]
         self.target_speed_pub.publish(self.target_speed)
         self.key = None
         return True

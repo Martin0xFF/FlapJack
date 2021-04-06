@@ -193,7 +193,11 @@ def mpu_convert(gyro_val, scale=0):
     else:
         gyro_val = gyro_val - 300
     return (gyro_val - 32767.5)/131.07 + 250  
-
+ 
+def reset(port):
+    aprime = Hermes(port)
+    while True:
+        aprime.send_command('r')
 
 
 def control_test(port):
@@ -257,7 +261,8 @@ if __name__ == "__main__":
     parser.add_argument('--control_test', '-c', action='store_true')
     parser.add_argument('--speed_test', '-sp', action='store_true')
     parser.add_argument('--target','-t') 
-
+    parser.add_argument('--reset', '-r', action='store_true')
+ 
 
     args = parser.parse_args()
 
@@ -271,6 +276,9 @@ if __name__ == "__main__":
         motor_test(args.port)
     if args.sensor_test:
         sensor_test(args.port)
+    if args.reset:
+        reset(args.port)
+ 
     if args.control_test:
         control_test(args.port)
     if args.speed_test:

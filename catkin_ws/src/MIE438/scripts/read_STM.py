@@ -4,7 +4,7 @@ import serial.tools.list_ports
 import time
 from collections import deque
 import numpy as np
-from std_msgs.msg import String, Float32MultiArray
+from std_msgs.msg import String, Float64MultiArray
 import sys, select, os, serial
 
 # Custom Modules
@@ -17,8 +17,8 @@ else:
 class bp_communicator_read():
     def __init__(self):
         # Publishers and subscribers
-        self.odom_pub = rospy.Publisher('odom', Float32MultiArray, queue_size=1)
-        self.odom = Float32MultiArray()
+        self.odom_pub = rospy.Publisher('odom', Float64MultiArray, queue_size=1)
+        self.odom = Float64MultiArray()
 
         # For writing back to BP
         self.port = None
@@ -43,10 +43,15 @@ class bp_communicator_read():
         self.data = self.reading.extract()
 
         # Sends length 3 array: [Encoder Left, Encoder Right, Delta]
-        self.odom.data = [self.data['encoderleft'], self.data['encoderright'], time.time()-self.start]
+        self.odom.data = [to_rad(self.data['encoderleft']), to_rad(self.data['encoderright']), time.time()-self.start]
         self.odom_pub.publish(self.odom)
-        print(self.odom.data)
         return True
+
+def to_rad(counts_per_message):
+    '''
+    convert the counts per message to radiand per message
+    '''
+    return counts_per_message*(np.pi/120)    
 
 if __name__ == "__main__":
     if os.name != 'nt':
