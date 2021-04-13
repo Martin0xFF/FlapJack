@@ -12,7 +12,8 @@ ssh -X {name}@{host}
 ```
 
 ## Run the Camera Module
-```rosrun cv_camera cv_camera_node                         
+```
+rosrun cv_camera cv_camera_node                         
 ```
 ## Stream the video
 ```
