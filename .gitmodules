@@ -1,0 +1,6 @@
+[submodule "catkin_ws/src/cv_camera"]
+	path = catkin_ws/src/cv_camera
+	url = git@github.com:OTL/cv_camera.git
+[submodule "catkin_ws/src/image_common"]
+	path = catkin_ws/src/image_common
+	url = git@github.com:ros-perception/image_common.git
