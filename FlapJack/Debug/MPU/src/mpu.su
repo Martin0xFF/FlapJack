@@ -1,0 +1,10 @@
+mpu.c:4:6:mpu_whoami	32	static
+mpu.c:9:5:mpu_set_gyro_sample_rate	32	static
+mpu.c:14:5:mpu_get_gyro_sample_rate	32	static
+mpu.c:19:5:mpu_set_gyro_config	32	static
+mpu.c:35:5:mpu_get_gyro_config	32	static
+mpu.c:39:5:mpu_set_acel_config	32	static
+mpu.c:55:5:mpu_get_acel_config	32	static
+mpu.c:60:5:mpu_get_bytes	40	static
+mpu.c:69:5:mpu_get_data	48	static
+mpu.c:80:5:mpu_pwr_mgmt	40	static
