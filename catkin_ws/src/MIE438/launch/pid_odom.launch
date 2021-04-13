@@ -1,0 +1,5 @@
+
+<launch>
+    <include file= "$(find MIE438)/launch/fj_broker.launch"/>
+    <node pkg="MIE438" type="motor_control.py" name="PID_Motor"/>
+</launch>

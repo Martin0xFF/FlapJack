@@ -46,6 +46,7 @@ class bp_communicator_write():
         self.r_dir = data.data[1]
         self.l_speed = data.data[2]
         self.r_speed = data.data[3]
+        self.write()                # on new message we update mconfig
         return True
 
     def write(self):
@@ -60,6 +61,6 @@ if __name__ == "__main__":
     bp_comm = bp_communicator_write()
     try:
         while (1):
-           bp_comm.write()
+           pass
     except rospy.ROSInterruptException:
         print("comm failed")

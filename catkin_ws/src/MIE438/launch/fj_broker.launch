@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="MIE438" type="read_STM.py" name="STMBrokerSensor" respawn="true"/>
+    <node pkg="MIE438" type="write_STM.py" name="STMBrokerAct" respawn="true"/>
+</launch>
