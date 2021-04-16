@@ -27,6 +27,7 @@ class bp_communicator_write():
                     self.port = port[0]
             if not self.port:
                 print("ERROR: Waiting for port.")
+        print(self.port)
         self.command = Hermes(self.port)
 
         # For negotiating speed:
@@ -61,6 +62,6 @@ if __name__ == "__main__":
     bp_comm = bp_communicator_write()
     try:
         while (1):
-           pass
+           bp_comm.write()
     except rospy.ROSInterruptException:
         print("comm failed")
